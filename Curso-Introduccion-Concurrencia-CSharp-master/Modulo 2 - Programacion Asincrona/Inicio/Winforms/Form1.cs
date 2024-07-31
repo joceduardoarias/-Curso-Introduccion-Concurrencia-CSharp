@@ -24,8 +24,10 @@ namespace Winforms
         private async void btnIniciar_Click(object sender, EventArgs e)
         {   
             Console.WriteLine("Iniciando...");
+            loadingGIF.Visible = true;
             await Esperar(); //Cuando se ejecuta el await, el hilo principal se libera y se ejecuta el metodo Esperar en otro hilo.
             MessageBox.Show("Pasaron los 5 segundos");
+            loadingGIF.Visible = false;
             Console.WriteLine("Finalizado!");
         }
 
