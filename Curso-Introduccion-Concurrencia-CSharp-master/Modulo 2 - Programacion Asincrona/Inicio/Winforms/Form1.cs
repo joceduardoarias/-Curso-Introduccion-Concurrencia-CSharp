@@ -31,8 +31,17 @@ namespace Winforms
             loadingGIF.Visible = true;
             await Esperar(); //Cuando se ejecuta el await, el hilo principal se libera y se ejecuta el metodo Esperar en otro hilo.
             var nombre = txtInput.Text;
-            var saludo = await ObtenerSaludo(nombre);
-            MessageBox.Show(saludo);
+            try
+            {
+                var saludo = await ObtenerSaludo(nombre);
+                MessageBox.Show(saludo);
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine("HttpRequestException!");
+                MessageBox.Show(ex.Message);
+            }
+                        
             loadingGIF.Visible = false;
             Console.WriteLine("Finalizado!");
         }
@@ -46,7 +55,8 @@ namespace Winforms
         }
         private async Task<string> ObtenerSaludo(string nombre)
         {
-            var response = await client.GetAsync($"{apiUrl}saludos/{nombre}");
+            var response = await client.GetAsync($"{apiUrl}saludos1/{nombre}");
+            response.EnsureSuccessStatusCode(); // Lanza una excepción si el código de estado no es exitoso
             var content = await response.Content.ReadAsStringAsync();
             return content;
         }
