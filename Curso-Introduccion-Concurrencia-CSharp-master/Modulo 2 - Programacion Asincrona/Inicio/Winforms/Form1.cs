@@ -26,10 +26,10 @@ namespace Winforms
         }
 
         private async void btnIniciar_Click(object sender, EventArgs e)
-        {   
+        {
             Console.WriteLine("Iniciando...");
             loadingGIF.Visible = true;
-            var tarjetas = ObtenerTarjetas(25000);
+            var tarjetas = await ObtenerTarjetas(25000);
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             try
@@ -41,7 +41,7 @@ namespace Winforms
                 Console.WriteLine("HttpRequestException!");
                 MessageBox.Show(ex.Message);
             }
-            MessageBox.Show($"Operación finalizada en {stopwatch.ElapsedMilliseconds/1000.0} segundos");            
+            MessageBox.Show($"Operación finalizada en {stopwatch.ElapsedMilliseconds / 1000.0} segundos");
             loadingGIF.Visible = false;
             Console.WriteLine("Finalizado!");
         }
@@ -60,27 +60,38 @@ namespace Winforms
             var content = await response.Content.ReadAsStringAsync();
             return content;
         }
-        private List<string> ObtenerTarjetas(int cantidadDeTarjetas)
-        {
-            var tarjetas = new List<string> ();
-            for (int i = 0; i < cantidadDeTarjetas; i++)
+        private async Task <List<string>> ObtenerTarjetas(int cantidadDeTarjetas)
+        {   
+            // Si se esta esparando obtener muchos registros creo un nuevo hilo para no bloquear el Hilo 'UI'            
+            return await Task.Run(() =>
             {
-                tarjetas.Add(i.ToString().PadLeft(16,'0'));
-            }
-            return tarjetas;
+                var tarjetas = new List<string>();
+
+                for (int i = 0; i < cantidadDeTarjetas; i++)
+                {
+                    tarjetas.Add(i.ToString().PadLeft(16, '0'));
+                }
+                
+                return tarjetas;
+            });
+            
+            
         }
         private async Task ProcesarTarjeta(List<string> tarjetas)
-        {   
+        {
             var tareas = new List<Task>();
-            foreach (var tarjeta in tarjetas)
-            {
-                var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
-                var responseTask =  client.PostAsync($"{apiUrl}tarjetas", content); // No se espera a que termine
-                tareas.Add(responseTask);
-            }
 
+            await Task.Run(() =>
+            {                
+                foreach (var tarjeta in tarjetas)
+                {
+                    var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
+                    var responseTask = client.PostAsync($"{apiUrl}tarjetas", content); // No se espera a que termine
+                    tareas.Add(responseTask);
+                }
+            });
             await Task.WhenAll(tareas); // Espera a que todas las tareas terminen
-            
+
         }
     }
 }
