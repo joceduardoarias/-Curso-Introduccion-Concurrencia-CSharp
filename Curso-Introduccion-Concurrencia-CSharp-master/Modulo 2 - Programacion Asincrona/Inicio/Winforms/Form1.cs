@@ -78,18 +78,20 @@ namespace Winforms
             
         }
         private async Task ProcesarTarjeta(List<string> tarjetas)
-        {
-            var tareas = new List<Task>();
+        {   
+            using var semaforo = new SemaphoreSlim(4000);
 
-            await Task.Run(() =>
-            {                
-                foreach (var tarjeta in tarjetas)
-                {
-                    var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
-                    var responseTask = client.PostAsync($"{apiUrl}tarjetas", content); // No se espera a que termine
-                    tareas.Add(responseTask);
-                }
-            });
+            var tareas = new List<Task<HttpRequestMessage>>();
+
+            tareas = tarjetas.Select(async tarjeta =>
+            {
+                await semaforo.WaitAsync();
+                var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync($"{apiUrl}tarjetas", content);
+                semaforo.Release();
+                return response.RequestMessage;
+            }).ToList();
+            
             await Task.WhenAll(tareas); // Espera a que todas las tareas terminen
 
         }
