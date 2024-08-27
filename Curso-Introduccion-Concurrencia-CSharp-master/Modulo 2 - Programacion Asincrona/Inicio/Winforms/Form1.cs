@@ -28,13 +28,18 @@ namespace Winforms
         private async void btnIniciar_Click(object sender, EventArgs e)
         {
             Console.WriteLine("Iniciando...");
+
+            var reportarProgreso = new Progress<int>(ReportarProgreso);
             loadingGIF.Visible = true;
-            var tarjetas = await ObtenerTarjetas(25000);
+            
+            var tarjetas = await ObtenerTarjetas(250);
+            
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+
             try
             {
-                await ProcesarTarjeta(tarjetas); // El orden en que procesas las tarjetas no se puede determinar.
+                await ProcesarTarjeta(tarjetas,reportarProgreso); // El orden en que procesas las tarjetas no se puede determinar.
             }
             catch (HttpRequestException ex)
             {
@@ -77,11 +82,12 @@ namespace Winforms
             
             
         }
-        private async Task ProcesarTarjeta(List<string> tarjetas)
+        private async Task ProcesarTarjeta(List<string> tarjetas, IProgress<int> progress = null)
         {   
-            using var semaforo = new SemaphoreSlim(4000);
+            using var semaforo = new SemaphoreSlim(40);
 
             var tareas = new List<Task<HttpRequestMessage>>();
+            var indice = 0;
 
             tareas = tarjetas.Select(async tarjeta =>
             {
@@ -89,11 +95,23 @@ namespace Winforms
                 var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
                 var response = await client.PostAsync($"{apiUrl}tarjetas", content);
                 semaforo.Release();
+                
+                if (progress != null)
+                {
+                    var progreso = Interlocked.Increment(ref indice) * 100 / tarjetas.Count;
+                    progress.Report(progreso);
+                }
+
                 return response.RequestMessage;
             }).ToList();
             
             await Task.WhenAll(tareas); // Espera a que todas las tareas terminen
 
+        }
+        private void ReportarProgreso(int progreso)
+        {
+            pgProcesamiento.Value = progreso;
+            Console.WriteLine($"Progreso: {progreso}");
         }
     }
 }
