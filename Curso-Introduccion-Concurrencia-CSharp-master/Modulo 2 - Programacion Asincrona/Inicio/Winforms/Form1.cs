@@ -87,26 +87,28 @@ namespace Winforms
             using var semaforo = new SemaphoreSlim(40);
 
             var tareas = new List<Task<HttpRequestMessage>>();
-            var indice = 0;
-
+            
             tareas = tarjetas.Select(async tarjeta =>
             {
                 await semaforo.WaitAsync();
                 var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
                 var response = await client.PostAsync($"{apiUrl}tarjetas", content);
                 semaforo.Release();
-                
-                if (progress != null)
-                {
-                    var progreso = Interlocked.Increment(ref indice) * 100 / tarjetas.Count;
-                    progress.Report(progreso);
-                }
-
+                               
                 return response.RequestMessage;
             }).ToList();
             
-            await Task.WhenAll(tareas); // Espera a que todas las tareas terminen
+            var respuestasTareas =   Task.WhenAll(tareas);
 
+            if (progress != null)
+            {
+                while (await Task.WhenAny(respuestasTareas, Task.Delay(1000)) != respuestasTareas)
+                {
+                    var tareasCompletadas = tareas.Count(t => t.IsCompleted);
+                    var progreso = tareasCompletadas * 100 / tarjetas.Count;
+                    progress.Report(progreso);
+                }
+            }
         }
         private void ReportarProgreso(int progreso)
         {
