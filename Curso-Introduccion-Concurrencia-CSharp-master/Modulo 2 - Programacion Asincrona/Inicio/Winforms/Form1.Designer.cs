@@ -36,6 +36,7 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.pgProcesamiento = new System.Windows.Forms.ProgressBar();
+            this.btnReintentar = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.loadingGIF)).BeginInit();
             this.SuspendLayout();
             // 
@@ -98,11 +99,22 @@
             this.pgProcesamiento.Size = new System.Drawing.Size(236, 32);
             this.pgProcesamiento.TabIndex = 6;
             // 
+            // btnReintentar
+            // 
+            this.btnReintentar.Location = new System.Drawing.Point(595, 129);
+            this.btnReintentar.Name = "btnReintentar";
+            this.btnReintentar.Size = new System.Drawing.Size(152, 43);
+            this.btnReintentar.TabIndex = 7;
+            this.btnReintentar.Text = "Reintentar";
+            this.btnReintentar.UseVisualStyleBackColor = true;
+            this.btnReintentar.Click += new System.EventHandler(this.btnReintentar_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1200, 692);
+            this.ClientSize = new System.Drawing.Size(1208, 710);
+            this.Controls.Add(this.btnReintentar);
             this.Controls.Add(this.pgProcesamiento);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.label1);
@@ -115,8 +127,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.loadingGIF)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
+
+        private System.Windows.Forms.Button btnReintentar;
 
         #endregion
 

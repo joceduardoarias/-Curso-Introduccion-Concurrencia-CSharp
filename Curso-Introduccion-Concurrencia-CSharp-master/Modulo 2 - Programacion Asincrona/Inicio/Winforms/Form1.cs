@@ -149,5 +149,35 @@ namespace Winforms
 
             return new HttpClient(handler);
         }
+        private async void btnReintentar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var contenido = await Reintentar(() => ObtenerSaludo("Juan"));
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+            }
+        }
+        // Reintentar es un método genérico que recibe una función que devuelve una tarea y la ejecuta hasta que se complete exitosamente
+        // o hasta que se alcance el número de reintentos.
+        private async Task<T> Reintentar<T>(Func<Task<T>> f, int reintentos = 3, int tiempoEspera = 1000)
+        {
+            for (int i = 0; i < reintentos -1; i++)
+            {
+                try
+                {
+                    await f();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error en el intento {i + 1}: {ex.Message}");
+                    await Task.Delay(tiempoEspera);
+                }
+            }
+
+            return await f();
+        }
     }
 }
