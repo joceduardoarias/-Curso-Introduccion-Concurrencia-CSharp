@@ -18,34 +18,47 @@ namespace Winforms
     {
         private string apiUrl;
         private HttpClient client;
+        private CancellationTokenSource cancellationToken;
         public Form1()
         {
             InitializeComponent();
             apiUrl = "https://localhost:44313/";
-            client = new HttpClient();
+            client = CreateHttpClient();
         }
 
         private async void btnIniciar_Click(object sender, EventArgs e)
         {
             Console.WriteLine("Iniciando...");
 
+            cancellationToken = new CancellationTokenSource();
+
             var reportarProgreso = new Progress<int>(ReportarProgreso);
             loadingGIF.Visible = true;
             
-            var tarjetas = await ObtenerTarjetas(250);
+            var tarjetas = await ObtenerTarjetas(1000);
             
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
             try
             {
-                await ProcesarTarjeta(tarjetas,reportarProgreso); // El orden en que procesas las tarjetas no se puede determinar.
+                await ProcesarTarjeta(tarjetas,reportarProgreso,cancellationToken.Token); // El orden en que procesas las tarjetas no se puede determinar.
             }
             catch (HttpRequestException ex)
             {
                 Console.WriteLine("HttpRequestException!");
                 MessageBox.Show(ex.Message);
             }
+            catch (TaskCanceledException ex)
+            {
+                Console.WriteLine("Operación cancelada!");
+                MessageBox.Show("Operación cancelada!");
+            }
+            finally
+            {
+                //cancellationToken.Dispose();
+            }
+
             MessageBox.Show($"Operación finalizada en {stopwatch.ElapsedMilliseconds / 1000.0} segundos");
             loadingGIF.Visible = false;
             Console.WriteLine("Finalizado!");
@@ -53,6 +66,7 @@ namespace Winforms
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
+            cancellationToken?.Cancel();
         }
         private async Task Esperar()
         {
@@ -82,7 +96,7 @@ namespace Winforms
             
             
         }
-        private async Task ProcesarTarjeta(List<string> tarjetas, IProgress<int> progress = null)
+        private async Task ProcesarTarjeta(List<string> tarjetas, IProgress<int> progress = null, CancellationToken cancellationToken = default)
         {   
             using var semaforo = new SemaphoreSlim(40);
 
@@ -90,19 +104,30 @@ namespace Winforms
             
             tareas = tarjetas.Select(async tarjeta =>
             {
-                await semaforo.WaitAsync();
-                var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync($"{apiUrl}tarjetas", content);
-                semaforo.Release();
-                               
-                return response.RequestMessage;
+                try
+                {
+                    await semaforo.WaitAsync();
+                    var content = new StringContent(JsonConvert.SerializeObject(tarjeta), Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync($"{apiUrl}tarjetas", content, cancellationToken);
+                    
+                    return response.RequestMessage;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }finally
+                {
+                    semaforo.Release();
+                }
+                
             }).ToList();
             
             var respuestasTareas =   Task.WhenAll(tareas);
 
             if (progress != null)
             {
-                while (await Task.WhenAny(respuestasTareas, Task.Delay(1000)) != respuestasTareas)
+                while (await Task.WhenAny(respuestasTareas, Task.Delay(3000)) != respuestasTareas)
                 {
                     var tareasCompletadas = tareas.Count(t => t.IsCompleted);
                     var progreso = tareasCompletadas * 100 / tarjetas.Count;
@@ -114,6 +139,15 @@ namespace Winforms
         {
             pgProcesamiento.Value = progreso;
             Console.WriteLine($"Progreso: {progreso}");
+        }
+        public static HttpClient CreateHttpClient()
+        {
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+
+            return new HttpClient(handler);
         }
     }
 }
