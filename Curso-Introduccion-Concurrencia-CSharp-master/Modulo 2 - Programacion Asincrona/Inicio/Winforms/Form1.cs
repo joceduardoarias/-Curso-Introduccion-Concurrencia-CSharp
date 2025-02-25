@@ -179,5 +179,39 @@ namespace Winforms
 
             return await f();
         }
+        private async Task<string> ObtenerSaludoDelay(string nombre, CancellationToken cancellationToken = default)
+        {
+            var response = await client.GetAsync($"{apiUrl}saludos/delay/{nombre}", cancellationToken);
+            response.EnsureSuccessStatusCode(); // Lanza una excepción si el código de estado no es exitoso
+            var content = await response.Content.ReadAsStringAsync();
+            return content;
+        }
+
+        private async void btnUnasolaTarea_Click(object sender, EventArgs e)
+        {   
+            cancellationToken = new CancellationTokenSource();
+            var token = cancellationToken.Token;
+            var nombres = new string[]{"Juan","Pedro","Maria","Jose","Ana"};
+            var tareas = nombres.Select(async nombre =>
+            {
+                try
+                {
+                    var saludo = await ObtenerSaludoDelay(nombre,token);
+                    Console.WriteLine("Bienvenido {0}",saludo);
+                    return saludo;
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine(exception); // Cuando se cancela la tarea se lanza una excepción de tipo System.Threading.Tasks.TaskCanceledException: Se canceló una tarea.
+                    return null;
+                }
+            });
+           
+            var primeraTareaCompletada = await Task.WhenAny(tareas);
+            var resultado = await primeraTareaCompletada;
+
+            Console.WriteLine($"Primer saludo completado: {resultado}");
+            cancellationToken.Cancel();
+        }
     }
 }
