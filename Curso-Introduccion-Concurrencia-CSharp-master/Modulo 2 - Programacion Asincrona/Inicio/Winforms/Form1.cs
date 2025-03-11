@@ -213,5 +213,41 @@ namespace Winforms
             Console.WriteLine($"Primer saludo completado: {resultado}");
             cancellationToken.Cancel();
         }
+        
+        private Task EvaluarValor(string valor)
+        {
+            var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (valor == "1")
+            {
+                tcs.SetResult(null);
+            }
+            else if (valor == "2")
+            {
+                tcs.SetCanceled();
+            }
+            else
+            {
+                tcs.SetException(new ApplicationException($"Valor inváido {valor}"));
+            }
+            return tcs.Task;
+        }
+
+        private async void btnControlarRespuestaTarea_Click_1(object sender, EventArgs e)
+        {
+            var tarea = EvaluarValor(txtInput.Text);
+            Console.WriteLine("Estado de la tarea IsCompleted: {0}",tarea.IsCompleted);
+            Console.WriteLine("Estado de la tarea IsCanceled: {0}",tarea.IsCanceled);
+            Console.WriteLine("Estado de la tarea IsFaulted: {0}",tarea.IsFaulted);
+
+            try
+            {
+                await tarea;
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Exception:  {exception.Message}");
+            }
+            Console.WriteLine("Fin");
+        }
     }
 }

@@ -38,6 +38,7 @@
             this.pgProcesamiento = new System.Windows.Forms.ProgressBar();
             this.btnReintentar = new System.Windows.Forms.Button();
             this.btnUnasolaTarea = new System.Windows.Forms.Button();
+            this.btnControlarRespuestaTarea = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.loadingGIF)).BeginInit();
             this.SuspendLayout();
             // 
@@ -120,11 +121,22 @@
             this.btnUnasolaTarea.UseVisualStyleBackColor = true;
             this.btnUnasolaTarea.Click += new System.EventHandler(this.btnUnasolaTarea_Click);
             // 
+            // btnControlarRespuestaTarea
+            // 
+            this.btnControlarRespuestaTarea.Location = new System.Drawing.Point(595, 285);
+            this.btnControlarRespuestaTarea.Name = "btnControlarRespuestaTarea";
+            this.btnControlarRespuestaTarea.Size = new System.Drawing.Size(288, 60);
+            this.btnControlarRespuestaTarea.TabIndex = 9;
+            this.btnControlarRespuestaTarea.Text = "Control Estado";
+            this.btnControlarRespuestaTarea.UseVisualStyleBackColor = true;
+            this.btnControlarRespuestaTarea.Click += new System.EventHandler(this.btnControlarRespuestaTarea_Click_1);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1212, 719);
+            this.ClientSize = new System.Drawing.Size(1228, 755);
+            this.Controls.Add(this.btnControlarRespuestaTarea);
             this.Controls.Add(this.btnUnasolaTarea);
             this.Controls.Add(this.btnReintentar);
             this.Controls.Add(this.pgProcesamiento);
@@ -140,6 +152,8 @@
             this.ResumeLayout(false);
             this.PerformLayout();
         }
+
+        private System.Windows.Forms.Button btnControlarRespuestaTarea;
 
         private System.Windows.Forms.Button btnUnasolaTarea;
 
