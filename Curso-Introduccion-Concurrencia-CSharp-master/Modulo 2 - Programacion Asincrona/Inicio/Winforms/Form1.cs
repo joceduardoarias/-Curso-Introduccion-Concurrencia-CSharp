@@ -29,13 +29,9 @@ namespace Winforms
         {   
             Console.WriteLine("Iniciando...");
             loadingGIF.Visible = true;
-            // Aquí ocurre un problema de deadlock
-            // ObtenerValor() es un método asincrónico, pero se está esperando su resultado de manera sincrónica con `.Result`.
-            // En una aplicación de WinForms, el hilo principal maneja la UI y tiene un "contexto de sincronización".
-            // Cuando `ObtenerValor().Result` se ejecuta, el hilo principal queda bloqueado esperando el resultado.
-            // Sin embargo, `ObtenerValor` intenta reanudar su ejecución en el mismo hilo principal cuando `await Esperar();` finaliza.
-            // Como el hilo principal está bloqueado esperando `.Result`, el código nunca se reanuda, generando un *deadlock*.
-            var valor = ObtenerValor().Result; 
+            //Se ejecuta el metodo de manera asincrona y se espera a que termine
+            // y no se bloquee el hilo principal.
+            var valor = await ObtenerValor();
             MessageBox.Show("Pasaron los 5 segundos");
             loadingGIF.Visible = false;
             Console.WriteLine("Finalizado!");
